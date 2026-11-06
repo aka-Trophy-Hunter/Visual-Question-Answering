@@ -1,0 +1,39 @@
+html {
+    background-color: #b08f54;
+    background-image: -webkit-linear-gradient(65deg, #a73232 50%, #888da2 50%);
+    min-height: 1000px;
+    font-family: 'helvetica neue';
+}
+
+button {
+    min-height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    border-color: transparent;
+    background-color: #391772;
+    color: #8f6161;
+    font-size: 30px;
+    padding-bottom: 6px;
+    border-width: 0;
+}
+
+p {
+    margin: 0;
+    padding: 20px;
+    font-size: 20px;
+    font-weight: 200;
+    color: #348c3e;
+}
+#heading {
+    background-color: #211a03;
+    text-align: center;
+}
+
+.box {
+    text-align: center;
+    max-width: 400px;
+    margin: 50px auto;
+    background: rgb(17, 123, 116);
+    border-radius: 5px;
+    box-shadow: 5px 5px 15px -5px rgba(0, 0, 0, 0.3);
+}

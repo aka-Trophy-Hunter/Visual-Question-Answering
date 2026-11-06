@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual Question Answering</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #EEF1F5;
+      --surface: #FFFFFF;
+      --ink: #16202E;
+      --muted: #46556A;
+      --line: #C4CDD9;
+      --cobalt: #1F4FD8;
+      --cobalt-dark: #173CA8;
+      --night: #0F1B33;
+      --signal: #FFD23F;
+      --error: #FFB4A8;
+      --radius: 14px;
+      --font: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 1.0625rem;
+      line-height: 1.55;
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+
+    header { max-width: 60ch; margin-bottom: 32px; }
+    h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.01em; }
+    header p { margin: 0; color: var(--muted); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    /* Source toggle */
+    fieldset { border: 0; margin: 0 0 16px; padding: 0; }
+    legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+
+    .segmented {
+      display: inline-flex;
+      border: 2px solid var(--cobalt);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+    .segmented label {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--cobalt);
+      background: var(--surface);
+    }
+    .segmented input:checked + label { background: var(--cobalt); color: #fff; }
+    .segmented input:focus-visible + label { outline: 3px solid var(--signal); outline-offset: -3px; }
+
+    /* Viewfinder */
+    .viewfinder {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 4 / 3;
+      width: 100%;
+      background: #E3E8EF;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      text-align: center;
+      color: var(--muted);
+    }
+    .viewfinder::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      pointer-events: none;
+      background:
+        linear-gradient(var(--cobalt), var(--cobalt)) top left / 30px 3px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) top left / 3px 30px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) top right / 30px 3px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) top right / 3px 30px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) bottom left / 30px 3px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) bottom left / 3px 30px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) bottom right / 30px 3px no-repeat,
+        linear-gradient(var(--cobalt), var(--cobalt)) bottom right / 3px 30px no-repeat;
+    }
+    .viewfinder.dragging { background: #D5E0FA; }
+    .viewfinder:focus-within { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+    .viewfinder input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .viewfinder img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #E3E8EF; }
+    .viewfinder img[hidden] { display: none; }
+    .viewfinder .hint { padding: 0 40px; }
+    .viewfinder .hint strong { display: block; color: var(--ink); font-size: 1.15rem; margin-bottom: 2px; }
+    .viewfinder.has-image .hint { display: none; }
+    .viewfinder.link-mode { cursor: default; }
+    .viewfinder.link-mode input[type="file"] { display: none; }
+
+    /* Fields */
+    .field { margin-top: 18px; }
+    .field[hidden] { display: none; }
+    .field label { display: block; font-weight: 700; margin-bottom: 6px; }
+    .field input[type="text"],
+    .field input[type="url"] {
+      width: 100%;
+      font: inherit;
+      color: var(--ink);
+      padding: 12px 14px;
+      background: #fff;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+    }
+    .field input:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 1px; border-color: var(--cobalt); }
+
+    button.primary {
+      margin-top: 22px;
+      width: 100%;
+      font: inherit;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+      background: var(--cobalt);
+      border: 0;
+      border-radius: 10px;
+      padding: 14px 20px;
+      cursor: pointer;
+    }
+    button.primary:hover { background: var(--cobalt-dark); }
+    button.primary:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; box-shadow: 0 0 0 6px var(--night); }
+    button.primary:disabled { background: #6B7A99; cursor: progress; }
+
+    /* Answer panel: the one high-contrast moment */
+    .answer {
+      background: var(--night);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 28px;
+      min-height: 260px;
+    }
+    .answer h2 { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #B8C4DB; }
+    .answer .idle { color: #B8C4DB; margin: 0; }
+    .answer .status { margin: 0; color: #fff; }
+    .answer .error { margin: 0; color: var(--error); font-weight: 700; }
+
+    .answer-text {
+      margin: 0 0 24px;
+      color: var(--signal);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    dl { margin: 0; display: grid; gap: 16px; }
+    dt { color: #B8C4DB; font-size: 0.95rem; }
+    dd { margin: 2px 0 0; font-weight: 700; font-size: 1.15rem; }
+
+    .meter {
+      margin-top: 8px;
+      height: 12px;
+      border-radius: 6px;
+      background: #2A3A5E;
+      overflow: hidden;
+    }
+    .meter > span { display: block; height: 100%; background: var(--signal); border-radius: 6px; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      margin-right: 8px;
+      vertical-align: -2px;
+      border: 3px solid #4A5C85;
+      border-top-color: var(--signal);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap;
+    }
+
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; }
+      .page { padding: 28px 16px 48px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Visual Question Answering</h1>
+      <p>Add a photo, ask a question about it, and get a short answer. Built on CLIP features and trained on VizWiz, photos taken by people who are blind or have low vision.</p>
+    </header>
+
+    <main class="layout">
+      <form id="vqa-form" class="panel" novalidate>
+        <fieldset>
+          <legend>Photo source</legend>
+          <div class="segmented">
+            <input type="radio" name="source" id="src-upload" value="upload" checked>
+            <label for="src-upload">Upload a photo</label>
+            <input type="radio" name="source" id="src-url" value="url">
+            <label for="src-url">Use an image link</label>
+          </div>
+        </fieldset>
+
+        <div class="viewfinder" id="viewfinder">
+          <img id="preview" alt="Preview of the selected photo" hidden>
+          <div class="hint">
+            <strong>Drop a photo here</strong>
+            or select a file from your device
+          </div>
+          <input type="file" id="image" accept="image/*" aria-label="Choose a photo">
+        </div>
+
+        <div class="field" id="url-field" hidden>
+          <label for="image_url">Image link</label>
+          <input type="url" id="image_url" placeholder="https://example.com/photo.jpg" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="question">Your question</label>
+          <input type="text" id="question" placeholder="For example: What is in this bottle?" autocomplete="off">
+        </div>
+
+        <button type="submit" class="primary" id="submit">Get answer</button>
+      </form>
+
+      <section class="answer" aria-labelledby="answer-heading">
+        <h2 id="answer-heading">Answer</h2>
+        <div id="result" aria-live="polite">
+          <p class="idle">Your answer will appear here.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var form = document.getElementById('vqa-form');
+      var fileInput = document.getElementById('image');
+      var urlInput = document.getElementById('image_url');
+      var urlField = document.getElementById('url-field');
+      var questionInput = document.getElementById('question');
+      var viewfinder = document.getElementById('viewfinder');
+      var preview = document.getElementById('preview');
+      var result = document.getElementById('result');
+      var submitBtn = document.getElementById('submit');
+      var objectUrl = null;
+
+      function mode() {
+        return document.querySelector('input[name="source"]:checked').value;
+      }
+
+      function showPreview(src) {
+        if (!src) {
+          preview.hidden = true;
+          preview.removeAttribute('src');
+          viewfinder.classList.remove('has-image');
+          return;
+        }
+        preview.src = src;
+        preview.hidden = false;
+        viewfinder.classList.add('has-image');
+      }
+
+      preview.addEventListener('error', function () {
+        showPreview(null);
+      });
+
+      function refreshSource() {
+        var isUrl = mode() === 'url';
+        urlField.hidden = !isUrl;
+        viewfinder.classList.toggle('link-mode', isUrl);
+        if (isUrl) {
+          showPreview(urlInput.value.trim() || null);
+        } else {
+          showPreview(fileInput.files.length ? objectUrl : null);
+        }
+      }
+
+      document.querySelectorAll('input[name="source"]').forEach(function (r) {
+        r.addEventListener('change', refreshSource);
+      });
+
+      fileInput.addEventListener('change', function () {
+        if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+        if (fileInput.files.length) {
+          objectUrl = URL.createObjectURL(fileInput.files[0]);
+        }
+        refreshSource();
+      });
+
+      urlInput.addEventListener('change', refreshSource);
+
+      // Drag and drop onto the viewfinder (upload mode only)
+      ['dragenter', 'dragover'].forEach(function (evt) {
+        viewfinder.addEventListener(evt, function (e) {
+          if (mode() !== 'upload') return;
+          e.preventDefault();
+          viewfinder.classList.add('dragging');
+        });
+      });
+      ['dragleave', 'drop'].forEach(function (evt) {
+        viewfinder.addEventListener(evt, function () {
+          viewfinder.classList.remove('dragging');
+        });
+      });
+      viewfinder.addEventListener('drop', function (e) {
+        if (mode() !== 'upload') return;
+        e.preventDefault();
+        if (e.dataTransfer && e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          fileInput.dispatchEvent(new Event('change'));
+        }
+      });
+
+      function setResult(html) { result.innerHTML = html; }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function showError(message) {
+        setResult('<p class="error">' + escapeHtml(message) + '</p>');
+      }
+
+      function showAnswer(data) {
+        // The model's raw output is the chance the question is NOT answerable,
+        // so the "Answerable" score is 1 minus it (same as the original script.js).
+        var score = 1 - Number(data.answerability);
+        var meterHtml;
+        if (isFinite(score) && score >= 0 && score <= 1) {
+          var pct = Math.round(score * 100);
+          meterHtml =
+            '<dd>' + pct + '%' +
+            '<div class="meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct +
+            '" aria-label="Answerable"><span style="width:' + pct + '%"></span></div></dd>';
+        } else {
+          meterHtml = '<dd>' + escapeHtml(isFinite(score) ? score.toFixed(2) : data.answerability) + '</dd>';
+        }
+        setResult(
+          '<p class="answer-text">' + escapeHtml(data.answer) + '</p>' +
+          '<dl>' +
+            '<div><dt>Answer type</dt><dd>' + escapeHtml(data.answer_type) + '</dd></div>' +
+            '<div><dt>Answerable</dt>' + meterHtml + '</div>' +
+          '</dl>'
+        );
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var question = questionInput.value.trim();
+        var isUrl = mode() === 'url';
+        var url = urlInput.value.trim();
+
+        if (!isUrl && !fileInput.files.length) {
+          showError('Add a photo first, or switch to "Use an image link".');
+          return;
+        }
+        if (isUrl && !url) {
+          showError('Paste an image link first.');
+          urlInput.focus();
+          return;
+        }
+        if (!question) {
+          showError('Type a question about the photo.');
+          questionInput.focus();
+          return;
+        }
+
+        // Same form fields the Flask /predict route reads: image, image_url, question.
+        // Only the field for the chosen source is sent, so the backend never receives an empty file part.
+        var fd = new FormData();
+        fd.append('question', question);
+        if (isUrl) {
+          fd.append('image_url', url);
+        } else {
+          fd.append('image', fileInput.files[0]);
+        }
+
+        submitBtn.disabled = true;
+        setResult('<p class="status"><span class="spinner" aria-hidden="true"></span>Looking at the photo…</p>');
+
+        fetch('/predict', { method: 'POST', body: fd })
+          .then(function (res) {
+            return res.text().then(function (text) { return { ok: res.ok, text: text }; });
+          })
+          .then(function (r) {
+            var data;
+            try { data = JSON.parse(r.text); } catch (err) { data = null; }
+            if (!r.ok || !data || typeof data.answer === 'undefined') {
+              showError(r.ok && r.text && !data ? r.text : 'Something went wrong while getting the answer. Check the photo and try again.');
+              return;
+            }
+            showAnswer(data);
+          })
+          .catch(function () {
+            showError('Could not reach the server. Make sure the app is running and try again.');
+          })
+          .then(function () {
+            submitBtn.disabled = false;
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
