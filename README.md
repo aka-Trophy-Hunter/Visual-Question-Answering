@@ -3,7 +3,7 @@
 Welcome to my Visual Question Answering (VQA) project! The goal is to build a system that can answer natural-language questions about images, using pretrained multimodal features and a lightweight deep learning model. The project uses the [VizWiz](https://vizwiz.org/tasks-and-datasets/vqa/) dataset, which contains real-world photos taken by people who are blind or have low vision, along with their questions. A Flask web application lets you upload an image (or paste an image link), ask a question, and see the model's prediction.
 
 > [!NOTE]
-> This is an adapted project, undertaken for learning and study purposes. It is based on the original [yousefkotp/Visual-Question-Answering](https://github.com/yousefkotp/Visual-Question-Answering) repository and the [Less Is More](https://arxiv.org/abs/2206.05281) paper. Full credit for the original work goes to its authors (see [Credits](#credits)).
+> This is an adapted project, undertaken for learning and study purposes. It is based on the [Less Is More](https://arxiv.org/abs/2206.05281) paper. Full credit for the original work goes to its authors.
 
 <p align="center">
   <img src="Images/vizwiz_example.png" alt="VizWiz example" width="700">
@@ -128,6 +128,8 @@ The model was trained on Kaggle with a P100 GPU for 50 epochs. Checkpoints were 
 
 <p align="center">
   <img src="Images/training_vizwiz_accuracy.png" alt="Training VizWiz accuracy" width="700">
+  <img src="Images/training_answerable_distribution.png" alt="training_answerable_distribution" width="700">
+  <img src="Images/training_answer_type_distribution.png" alt="Training_answer_type_distribution" width="700">
 </p>
 
 ## Evaluation
@@ -226,8 +228,6 @@ Before running, place these files in the `Saved_Models` folder:
 ## Credits
 
 - Adapted and documented by [Moneeba Abrar](https://github.com/aka-Trophy-Hunter) for learning and study purposes.
-- Original project: [yousefkotp/Visual-Question-Answering](https://github.com/yousefkotp/Visual-Question-Answering) by [Yousef Kotp](https://github.com/yousefkotp), [Adham Mohamed](https://github.com/adhammohamed1), and [Mohamed Farid](https://github.com/MohamedFarid612).
-
 ## References
 
 - [Less Is More: Linear Layers on CLIP Features as Powerful VizWiz Model](https://arxiv.org/abs/2206.05281)
