@@ -128,7 +128,18 @@ The model was trained on Kaggle with a P100 GPU for 50 epochs. Checkpoints were 
 
 <p align="center">
   <img src="Images/training_vizwiz_accuracy.png" alt="Training VizWiz accuracy" width="700">
+
+</p>
+
+### Training Answerable Distribution
+
+<p align="center">
   <img src="Images/training_answerable_distribution.png" alt="training_answerable_distribution" width="700">
+</p>
+
+### Training Answer Type Distribution
+
+<p align="center">
   <img src="Images/training_answer_type_distribution.png" alt="Training_answer_type_distribution" width="700">
 </p>
 
